@@ -1,0 +1,83 @@
+Identity Message Types
+
+  announce
+
+    announces a public key
+    must be the first entry in any log
+    must appear only once in any log
+    contains the public key for the log
+    signature must match the announceed public key
+
+  identify
+
+    identifies another key as beloning to the same source
+    must appear only once in a any log for any key
+    cannot identify the key of the log in which it appears
+
+  renounce
+
+    breaks the identity between a log's key and another key after a certain entry
+    must follow (identify) for the same key
+    must appear only once in a any log for any key
+
+  attest
+
+    confirms that an identified key's entries are valid
+    must follow (identify)
+    cannot follow (renounce)
+
+Base Use Case
+
+  Log A1
+    announce
+    identify A2
+    X
+    attest A2 through Y
+
+  Log A2
+    announce
+    identify A1
+    Y
+    attest A1 through X
+
+
+Concept: The Hopper
+
+  Queue of messages to be approved by the user, and if approved, entered on their log.
+
+  e.g. attest entries from an identified log
+
+    A
+      Identify B
+      X
+      (Hopper: Attest B through Y)
+
+    B
+      Identify A
+      Y
+      (Hopper: Attest A through X)
+
+  e.g. identify entries for transitive identities
+
+    A
+      Identify B
+      (Hopper: Identify C)
+
+    B
+      Identify A
+      Identify C
+
+    C
+      Identify B
+      (Hopper: Identify A)
+
+Naming Message Types
+
+  name
+
+  adopt
+
+Naming Resolution API
+
+  resolve(name) -> (hash, digest, confidence) or null
+  resolve(name, confidence) -> (hash, digest) or null
