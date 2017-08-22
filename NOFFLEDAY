@@ -1,0 +1,164 @@
+Entry Payloads
+
+  Announcement
+
+    announces the existence of a log
+
+    type:     annnounce
+    nonce:    Hex, 32-Byte
+    key:      Ed25519, Public, Hex
+    uri:      URI
+
+    - must be the first entry in every log
+    - entry signature must match public key
+
+  Naming
+
+    assigns a memorable name to a digest
+
+    type:     name
+    name:     [String, ...]
+    space:    MD5 | SHA-1 | SHA-256 | SHA-512
+    key:      Hex, MD5 | SHA-1 | SHA-256 | SHA-512
+    prior:    Entry Digest, Hex, SHA-256
+
+    - cannot have the same name and space as any prior naming
+      on the same log or any currently linked log
+
+  Identification
+
+    identifies another log from a given entry
+
+    type:     identify
+    identity: String
+    key:      Ed25519, Public, Hex
+    from:     Entry Digest, Hex, SHA-256
+    prior:    Entry Digest, Hex, SHA-256
+
+    - one phase of a two-phase commit
+
+  Deidentification
+
+    breaks the identity of another log after a given entry
+
+    type:     identify
+    identity: String
+    after:    Entry Digest, Hex, SHA-256
+    prior:    Entry Digest, Hex, SHA-256
+
+    - must follow a single identifcation of the same identity
+    - cannot follow a deidentification of the same identity
+
+  Adoption
+
+    adopts names with a certain prefix from another identity
+
+    type:     adopt
+    from:     String
+    prefix:   [String, ...]
+    prior:    Entry Digest, Hex, SHA-256
+
+  Link
+
+    links two logs
+
+    type:     link
+    key:      Ed25519, Public, Hex
+    uri:      URI
+    note:     String
+    from:     Entry Digest, Hex, SHA-256
+    prior:    Entry Digest, Hex, SHA-256
+
+  Unlink
+
+    unlinks two logs
+
+    type:     unlink
+    key:      Ed25519, Public, Hex
+    note:     String
+    after:    Entry Digest, Hex, SHA-256
+    prior:    Entry Digest, Hex, SHA-256
+
+    - must follow a link to the same key
+
+  Confirmation
+
+    confirms entries on a linked log through a given entry
+
+    type:     confirm
+    key:      Ed25519, Public, Hex
+    through:  Entry Digest, Hex, SHA-256
+    prior:    Entry Digest, Hex, SHA-256
+
+    - prior must be the digest of an entry on key's log
+
+API
+
+  resolve(state, name) -> {
+    type: 'object',
+    properties: {
+      'SHA-1': {
+        oneOf: [
+          {
+            type: 'string',
+            pattern: '^[0-9a-f]{40}$',
+            confirmed: {type: 'boolean'}
+          },
+          {type: 'string', const: 'conflict'}
+        ]
+      },
+      'SHA-256': {
+        oneOf: [
+          {
+            type: 'string',
+            pattern: '^[0-9a-f]{64}$',
+            confirmed: {type: 'boolean'}
+          },
+          {type: 'string', const: 'conflict'}
+        ]
+      },
+      'SHA-512': {
+        oneOf: [
+          {
+            type: 'string',
+            pattern: '^[0-9a-f]{128}$',
+            confirmed: {type: 'boolean'}
+          },
+          {type: 'string', const: 'conflict'}
+        ]
+      }
+    },
+    additionalProperties: false
+  }
+
+  name(name, hash, digest)
+
+  identify(identity, key, entry)
+
+  deidentify(identity, key, entry)
+
+  adopt(identity, prefix)
+
+  link(key, note)
+
+  unlink(key, note)
+
+  confirm(key, entry)
+
+User Interface
+
+  Notifications
+
+    messages about events on replicated logs, e.g.:
+
+    - name collissions
+    - deidentifications
+    - replication errors
+    - log corruptions
+
+  To-Do List
+
+    messages that should probably be appended to the local log, e.g.:
+
+    - link confirmations
+    - linked log entry confirmations
